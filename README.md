@@ -1,4 +1,4 @@
 # RFormer
 Official Repository for the NeurIPS 2024 paper *Rough Transformers: Lightweight Continuous-Time Sequence Modelling with Path Signatures*
 
-(Code to be made available soon)
+(Note: Description of how run will come soon. The code will also undergo some refactoring in the near future.)
