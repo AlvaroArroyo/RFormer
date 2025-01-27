@@ -10,7 +10,6 @@ import os
 from model_classification import *
 import argparse
 import matplotlib.pyplot as plt
-import signatory
 import statistics
 import numpy as np
 import iisignature
@@ -231,11 +230,6 @@ def Signature_nonoverlapping(data, depth, sig_win_length, device):
     sigs = iisignature.sig(data.reshape(B, n_windows, -1, F).cpu(), depth)
     return torch.Tensor(sigs).to(device)
 
-def compute_signature_NOT_USED(tensor, sig_level):
-
-    sig = signatory.signature(tensor, sig_level, basepoint=True)
-    sig = sig.unsqueeze(1)
-    return sig
 
 def sigs(inputs):
     x = np.linspace(0, inputs.shape[1], inputs.shape[1])
@@ -341,12 +335,11 @@ def main(hyperp_tuning=False):
     
 
     sig_n_windows = int(seq_length/args.sig_win_len)
-    #sig_features = signatory.signature_channels(num_features, args.sig_level)
     #sig_features = num_features * args.sig_level #new
 
     if (args.use_signatures):
         if not args.univariate:
-            sig_output_size = signatory.signature_channels(num_features, args.sig_level)
+            sig_output_size = signature_channels(num_features, args.sig_level)
             num_features = sig_output_size
         else:
             num_features = num_features * args.sig_level
