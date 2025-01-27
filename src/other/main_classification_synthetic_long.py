@@ -393,7 +393,7 @@ def main(hyperp_tuning=False):
                 logs_name = f'{args.dataset}_{date_log}_use_signatures={args.use_signatures}_model={args.model}'
   
         print (logs_name)
-        outdir = f'models_classification/{logs_name}'
+        outdir = f'exp_{logs_name}'
         os.mkdir(outdir)
         writer = SummaryWriter(outdir) 
 
