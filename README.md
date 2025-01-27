@@ -12,3 +12,12 @@ Please, if you use this code, cite the [published paper in the Proceedings of Ne
   booktitle={The Thirty-eighth Annual Conference on Neural Information Processing Systems}
 }
 ```
+
+## Creating Conda Environment
+
+The repo contains a `rformer.yml` file, a conda environment that allows running the RFormer model. To import and activate it, you can do:
+
+```
+conda env create -f rformer.yml
+conda activate rformer
+```
