@@ -43,7 +43,7 @@ To train the model on synthetic data:
 python src/other/main_classification_synthetic_long.py
 ```
 
-To train the model on UEA datasets:
+To train the model on UEA datasets (https://www.timeseriesclassification.com):
 
 ```bash
 python src/UEA/main.py
