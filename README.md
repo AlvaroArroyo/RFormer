@@ -35,7 +35,7 @@ First, clone the repository:
    cd RFormer
    ```
 
-The paper includes experiments on both synthetic `src/other` and UEA datasets `src/UEA`. 
+The paper includes experiments on both synthetic (`src/other`) and UEA datasets ()`src/UEA`). 
 
 To train the model on synthetic data:
 
