@@ -14,11 +14,6 @@ Please, if you use this code, cite the [published paper in the Proceedings of Ne
 }
 ```
 
-## Features
-- **Rough Transformers:** A lightweight and efficient architecture for continuous time-series modelling.
-- **Signature Patching:** Utilising path signatures to capture local dynamics.
-- Suitable for both short- and long-horizon time-series prediction tasks.
-
 ## Requirements
 
 To ensure compatibility, the repository includes a `rformer.yml` file for creating a conda environment with all necessary dependencies.
