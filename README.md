@@ -35,19 +35,17 @@ First, clone the repository:
    cd RFormer
    ```
 
-The paper includes experiments on both synthetic (`src/other`) and UEA datasets ()`src/UEA`). 
+The paper includes experiments on both synthetic (`src/other`) and UEA datasets (`src/UEA`). 
 
 To train the model on synthetic data:
 
 ```bash
-# Train the RFormer model on a sample dataset
 python src/other/main_classification_synthetic_long.py
 ```
 
 To train the model on UEA datasets:
 
 ```bash
-# Train the RFormer model on a sample dataset
 python src/UEA/main.py
 ```
 
