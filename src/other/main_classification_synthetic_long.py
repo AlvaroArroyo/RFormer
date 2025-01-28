@@ -499,9 +499,9 @@ def main(hyperp_tuning=False):
 
         length = 250
         if args.use_signatures:
-            pd.Series(val_accuracy_list).to_csv(f'/nfs/home/alvaroa/ML/Transformer/signatures/plots/sinelong_s_{args.sig_level}_w{args.num_windows}.csv')
+            pd.Series(val_accuracy_list).to_csv(f'val_acc_sinelong_s_{args.sig_level}_w{args.num_windows}.csv')
         else:
-            pd.Series(val_accuracy_list).to_csv(f'/nfs/home/alvaroa/ML/Transformer/signatures/plots/val_acc_long_transformer_time_{length}.csv')
+            pd.Series(val_accuracy_list).to_csv(f'val_acc_long_transformer_time_{length}.csv')
 
 
 

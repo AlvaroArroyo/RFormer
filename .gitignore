@@ -1,5 +1,7 @@
 #User defined
 /exp_*
+val_acc_*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
