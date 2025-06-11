@@ -1,0 +1,13 @@
+# config.yaml
+dataset: TSC_MotorImagery
+epoch:   60
+local_tight: true
+num_windows: 200
+n_head: 3
+sig_level: 2
+add_time: true
+irreg: true
+univariate: true
+lr: 0.0001
+use_signatures: true
+embedded_dim: 16

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2018 The Google AI Language Team Authors and The HugginFace Inc. team.
+# Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,102 +12,156 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""PyTorch optimization for BERT model."""
+"""
+PyTorch optimization for BERT model.
+This file contains a cleaned version of the BERTAdam optimizer, preserving
+the original's specific scheduling and weight decay behavior.
+"""
 
 import math
 import torch
 from torch.optim import Optimizer
 from torch.nn.utils import clip_grad_norm_
+from typing import Callable, Dict, Iterable, List, Optional
 
-def warmup_cosine(x, warmup=0.002):
+# --- Learning Rate Schedulers with Warmup ---
+
+def warmup_cosine(x: float, warmup: float = 0.002) -> float:
+    """Linear warmup and cosine decay schedule."""
     if x < warmup:
-        return x/warmup
+        return x / warmup
+    # Note: This follows the original implementation. A more common formulation
+    # for the cosine decay part would be over the range [warmup, 1.0].
     return 0.5 * (1.0 + torch.cos(math.pi * x))
 
-def warmup_constant(x, warmup=0.002):
+def warmup_constant(x: float, warmup: float = 0.002) -> float:
+    """Linear warmup and constant schedule."""
     if x < warmup:
-        return x/warmup
+        return x / warmup
     return 1.0
 
-def warmup_linear(x, warmup=0.002):
+def warmup_linear(x: float, warmup: float = 0.002) -> float:
+    """Linear warmup and linear decay schedule."""
     if x < warmup:
-        return x/warmup
+        return x / warmup
+    # Note: This follows the original implementation. A more common formulation
+    # for linear decay would be (1.0 - x) / (1.0 - warmup).
     return 1.0 - x
 
-SCHEDULES = {
-    'warmup_cosine':warmup_cosine,
-    'warmup_constant':warmup_constant,
-    'warmup_linear':warmup_linear,
+SCHEDULES: Dict[str, Callable] = {
+    'warmup_cosine': warmup_cosine,
+    'warmup_constant': warmup_constant,
+    'warmup_linear': warmup_linear,
 }
 
+# --- BERTAdam Optimizer ---
 
 class BERTAdam(Optimizer):
-    """Implements BERT version of Adam algorithm with weight decay fix (and no ).
-    Params:
-        lr: learning rate
-        warmup: portion of t_total for the warmup, -1  means no warmup. Default: -1
-        t_total: total number of training steps for the learning
-            rate schedule, -1  means constant learning rate. Default: -1
-        schedule: schedule to use for the warmup (see above). Default: 'warmup_linear'
-        b1: Adams b1. Default: 0.9
-        b2: Adams b2. Default: 0.999
-        e: Adams epsilon. Default: 1e-6
-        weight_decay_rate: Weight decay. Default: 0.01
-        max_grad_norm: Maximum norm for the gradients (-1 means no clipping). Default: 1.0
     """
-    def __init__(self, params, lr, warmup=-1, t_total=-1, schedule='warmup_linear',
-                 b1=0.9, b2=0.999, e=1e-6, weight_decay_rate=0.01,
-                 max_grad_norm=1.0):
-        if not lr >= 0.0:
-            raise ValueError("Invalid learning rate: {} - should be >= 0.0".format(lr))
-        if schedule not in SCHEDULES:
-            raise ValueError("Invalid schedule parameter: {}".format(schedule))
-        if not 0.0 <= warmup < 1.0 and not warmup == -1:
-            raise ValueError("Invalid warmup: {} - should be in [0.0, 1.0[ or -1".format(warmup))
-        if not 0.0 <= b1 < 1.0:
-            raise ValueError("Invalid b1 parameter: {} - should be in [0.0, 1.0[".format(b1))
-        if not 0.0 <= b2 < 1.0:
-            raise ValueError("Invalid b2 parameter: {} - should be in [0.0, 1.0[".format(b2))
-        if not e >= 0.0:
-            raise ValueError("Invalid epsilon value: {} - should be >= 0.0".format(e))
-        defaults = dict(lr=lr, schedule=schedule, warmup=warmup, t_total=t_total,
-                        b1=b1, b2=b2, e=e, weight_decay_rate=weight_decay_rate,
-                        max_grad_norm=max_grad_norm)
-        super(BERTAdam, self).__init__(params, defaults)
+    Implements the BERT version of the Adam algorithm with weight decay fix,
+    warmup, and learning rate scheduling. This implementation is designed to
+    match the original BERT paper's optimizer behavior.
 
-    def get_lr(self):
-        lr = []
+    Args:
+        params (Iterable):
+            Iterable of parameters to optimize or dicts defining parameter groups.
+        lr (float):
+            The learning rate.
+        warmup (float, optional, defaults to -1):
+            Portion of t_total for the warmup, -1 means no warmup.
+            Value should be in [0.0, 1.0).
+        t_total (int, optional, defaults to -1):
+            Total number of training steps for the learning rate schedule,
+            -1 means constant learning rate.
+        schedule (str, optional, defaults to 'warmup_linear'):
+            Schedule to use for the warmup. Valid options are listed in SCHEDULES.
+        b1 (float, optional, defaults to 0.9):
+            Adam's beta1 parameter.
+        b2 (float, optional, defaults to 0.999):
+            Adam's beta2 parameter.
+        e (float, optional, defaults to 1e-6):
+            Adam's epsilon parameter for numerical stability.
+        weight_decay_rate (float, optional, defaults to 0.01):
+            Weight decay rate for the AdamW fix.
+        max_grad_norm (float, optional, defaults to 1.0):
+            Maximum norm for gradient clipping (-1 means no clipping).
+    """
+    def __init__(self,
+                 params: Iterable[torch.Tensor],
+                 lr: float,
+                 warmup: float = -1.0,
+                 t_total: int = -1,
+                 schedule: str = 'warmup_linear',
+                 b1: float = 0.9,
+                 b2: float = 0.999,
+                 e: float = 1e-6,
+                 weight_decay_rate: float = 0.01,
+                 max_grad_norm: float = 1.0):
+
+        if not lr >= 0.0:
+            raise ValueError(f"Invalid learning rate: {lr} - should be >= 0.0")
+        if schedule not in SCHEDULES:
+            raise ValueError(f"Invalid schedule parameter: {schedule}")
+        if not 0.0 <= warmup < 1.0 and not warmup == -1:
+            raise ValueError(f"Invalid warmup: {warmup} - should be in [0.0, 1.0) or -1")
+        if not 0.0 <= b1 < 1.0:
+            raise ValueError(f"Invalid b1 parameter: {b1} - should be in [0.0, 1.0)")
+        if not 0.0 <= b2 < 1.0:
+            raise ValueError(f"Invalid b2 parameter: {b2} - should be in [0.0, 1.0)")
+        if not e >= 0.0:
+            raise ValueError(f"Invalid epsilon value: {e} - should be >= 0.0")
+
+        defaults = dict(
+            lr=lr, schedule=schedule, warmup=warmup, t_total=t_total,
+            b1=b1, b2=b2, e=e, weight_decay_rate=weight_decay_rate,
+            max_grad_norm=max_grad_norm
+        )
+        super().__init__(params, defaults)
+
+    def get_lr(self) -> List[float]:
+        """
+        Calculates the current learning rate for each parameter.
+        Note: This returns a list of LRs, one per parameter, not per group,
+        and has unusual early exit behavior, which is preserved from the original.
+        """
+        lr_list = []
         for group in self.param_groups:
             for p in group['params']:
                 state = self.state[p]
+
+                # Original behavior: return [0] if any parameter is not initialized.
                 if len(state) == 0:
-                    return [0]
+                    return [0.0]
+
                 if group['t_total'] != -1:
                     schedule_fct = SCHEDULES[group['schedule']]
-                    lr_scheduled = group['lr'] * schedule_fct(state['step']/group['t_total'], group['warmup'])
+                    lr_scheduled = group['lr'] * schedule_fct(state['step'] / group['t_total'], group['warmup'])
                 else:
                     lr_scheduled = group['lr']
-                lr.append(lr_scheduled)
-        return lr
+                lr_list.append(lr_scheduled)
+        return lr_list
 
-    def step(self, closure=None):
-        """Performs a single optimization step.
+    def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
+        """
+        Performs a single optimization step.
 
-        Arguments:
+        Args:
             closure (callable, optional): A closure that reevaluates the model
                 and returns the loss.
         """
         loss = None
         if closure is not None:
-            loss = closure()
+            with torch.enable_grad():
+                loss = closure()
 
         for group in self.param_groups:
             for p in group['params']:
                 if p.grad is None:
                     continue
+
                 grad = p.grad.data
                 if grad.is_sparse:
-                    raise RuntimeError('Adam does not support sparse gradients, please consider SparseAdam instead')
+                    raise RuntimeError('BERTAdam does not support sparse gradients.')
 
                 state = self.state[p]
 
@@ -119,38 +173,37 @@ class BERTAdam(Optimizer):
                     # Exponential moving average of squared gradient values
                     state['next_v'] = torch.zeros_like(p.data)
 
-                next_m, next_v = state['next_m'], state['next_v']
+                exp_avg, exp_avg_sq = state['next_m'], state['next_v']
                 beta1, beta2 = group['b1'], group['b2']
 
-                # Add grad clipping
+                # Preserving per-parameter gradient clipping from the original implementation.
+                # Note: The standard practice is to clip the norm of all gradients
+                # in a group collectively.
                 if group['max_grad_norm'] > 0:
                     clip_grad_norm_(p, group['max_grad_norm'])
 
-                # Decay the first and second moment running average coefficient
-                # In-place operations to update the averages at the same time
-                next_m.mul_(beta1).add_(1 - beta1, grad)
-                next_v.mul_(beta2).addcmul_(1 - beta2, grad, grad)
-                update = next_m / (next_v.sqrt() + group['e'])
+                # AdamW update:
+                # Decay the first and second moment running average coefficients.
+                exp_avg.mul_(beta1).add_(grad, alpha=1 - beta1)
+                exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1 - beta2)
+                update = exp_avg / (exp_avg_sq.sqrt() + group['e'])
 
-                # Just adding the square of the weights to the loss function is *not*
-                # the correct way of using L2 regularization/weight decay with Adam,
-                # since that will interact with the m and v parameters in strange ways.
-                #
-                # Instead we want ot decay the weights in a manner that doesn't interact
-                # with the m/v parameters. This is equivalent to adding the square
-                # of the weights to the loss with plain (non-momentum) SGD.
+                # Apply weight decay as in AdamW.
                 if group['weight_decay_rate'] > 0.0:
-                    update += group['weight_decay_rate'] * p.data
+                    update.add_(p.data, alpha=group['weight_decay_rate'])
 
+                # Calculate scheduled learning rate.
                 if group['t_total'] != -1:
                     schedule_fct = SCHEDULES[group['schedule']]
-                    lr_scheduled = group['lr'] * schedule_fct(state['step']/group['t_total'], group['warmup'])
+                    lr_scheduled = group['lr'] * schedule_fct(state['step'] / group['t_total'], group['warmup'])
                 else:
                     lr_scheduled = group['lr']
 
-                update_with_lr = lr_scheduled * update
-                p.data.add_(-update_with_lr)
+                p.data.add_(update, alpha=-lr_scheduled)
 
+                # Preserving per-parameter step increment from the original implementation.
+                # Note: This is unconventional and causes the step count to advance
+                # much faster than the number of optimizer steps.
                 state['step'] += 1
 
         return loss

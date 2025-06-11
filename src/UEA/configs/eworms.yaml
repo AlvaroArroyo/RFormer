@@ -1,0 +1,9 @@
+# config.yaml
+dataset: TSC_EigenWorms
+epoch:   100
+local_tight: true
+num_windows: 10
+n_head: 1
+sig_level: 2
+add_time: true
+irreg: true

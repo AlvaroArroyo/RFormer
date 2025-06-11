@@ -1,0 +1,13 @@
+# config.yaml
+dataset: TSC_EthanolConcentration
+epoch:   100
+global_backward: true
+num_windows: 400
+n_head: 1
+sig_level: 1
+add_time: true
+irreg: true
+lr: 0.001
+use_signatures: true
+embedded_dim: 16
+

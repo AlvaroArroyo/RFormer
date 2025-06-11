@@ -36,7 +36,6 @@ from torch.distributions.normal import Normal
 import copy
 from torch.nn.parameter import Parameter
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-from utils import *
 
 def gelu(x):
     return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
@@ -70,13 +69,6 @@ class Attention(nn.Module):
         self.c_proj = Conv1D(n_embd, 1, n_embd*self.n_head)
         self.attn_dropout = nn.Dropout(args.attn_pdrop)
         self.resid_dropout = nn.Dropout(args.resid_pdrop)
-
-        print ('---- Attn')
-        print(f'Query_Key_CNN: {count_parameters(self.query_key)}')
-        print(f'Value_CNN: {count_parameters(self.value)}')
-        print(f'C_proj_CNN: {count_parameters(self.c_proj)}')
-
-
 
     def log_mask(self,win_len,sub_len):
         mask = torch.zeros((win_len,win_len),dtype=torch.float)
@@ -214,10 +206,6 @@ class Block(nn.Module):
         self.mlp = MLP(4 * n_embd, n_embd)
         self.ln_2 = LayerNorm(n_embd)
 
-        print ('--- Block')
-        print(f'attn: {count_parameters(self.attn)}')
-        print(f'mlp: {count_parameters(self.mlp)}')
-
     def forward(self, x):
         attn = self.attn(x)
         ln1 = self.ln_1(x + attn)
@@ -248,12 +236,6 @@ class TransformerModel(nn.Module):
         #nn.init.normal_(self.id_embed.weight, std=0.02)
         nn.init.normal_(self.po_embed.weight, std=0.02)
 
-
-        print ('-- Transformer')
-        print(f'blocks: {count_parameters(self.blocks)}')
-        #print(f'id_embed: {count_parameters(self.id_embed)}')
-        print(f'po_embed: {count_parameters(self.po_embed)}')
-
     def forward(self, x):
         length = x.size(1) # (Batch_size,length,input_dim)
         position = torch.tensor(torch.arange(length),dtype=torch.long).to(device)
@@ -282,12 +264,6 @@ class DecoderTransformer(nn.Module):
         self.final = torch.nn.Linear(num_classes, num_classes, bias=True)
 
         self._initialize_weights()
-
-        print('-Decoder Transformer')
-        #print(f'mu: {count_parameters(self.mu)}')
-        #print(f'sigma: {count_parameters(self.sigma)}')
-        print(f'mlp: {count_parameters(self.mlp)}')
-        print(f'transformer: {count_parameters(self.transformer)}')
 
     def _initialize_weights(self):
         for m in self.modules():

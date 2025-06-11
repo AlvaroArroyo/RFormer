@@ -1,0 +1,12 @@
+# config.yaml
+dataset: TSC_SelfRegulationSCP2
+epoch:   30
+global_backward: true
+num_windows: 50
+n_head: 3
+sig_level: 3
+add_time: true
+irreg: true
+univariate: true
+lr: 0.0001
+use_signatures: true
