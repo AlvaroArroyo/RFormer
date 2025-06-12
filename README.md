@@ -40,13 +40,14 @@ The paper includes experiments on both synthetic (`src/other`) and UEA datasets 
 To train the model on synthetic data:
 
 ```bash
-python src/synthetic/main_regression_eeg.py --use_signatures
+python src/EEG/main_classification_synthetic_long.py --use_signatures --preprocess
 ```
 
 To train the model on EEG data:
 
-python src/EEG/main_classification_synthetic_long.py --use_signatures --preprocess
-
+```bash
+python src/synthetic/main_regression_eeg.py --use_signatures
+```
 
 To train the model on UEA datasets (https://www.timeseriesclassification.com):
 
