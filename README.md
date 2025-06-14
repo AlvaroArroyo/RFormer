@@ -35,17 +35,17 @@ First, clone the repository:
    cd RFormer
    ```
 
-The paper includes experiments on both synthetic (`src/other`) and UEA datasets (`src/UEA`). 
+The paper includes experiments on both synthetic (`src/EEG`) and UEA datasets (`src/UEA`). 
 
-To train the model on synthetic data:
+To train the model on EEG data without signature preprocessing:
 
 ```bash
-python src/EEG/main_classification_synthetic_long.py --use_signatures 
+mkdir src/EEG/data/
+python src/synthetic/main_regression_eeg.py --use_signatures
 ```
-
-To train the model on EEG data:
-
+To train with signature preprocessing
 ```bash
+mkdir src/EEG/data/
 python src/synthetic/main_regression_eeg.py --use_signatures --preprocess
 ```
 
