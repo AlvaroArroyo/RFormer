@@ -3,31 +3,9 @@ The dataset preprocessing is based on DeepAR
 https://arxiv.org/pdf/1704.04110.pdf
 """
 
-from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import torch
-from sktime.datasets import load_from_arff_to_dataframe
-from torch import Tensor
-import os, os.path
-import urllib.response
-import zipfile
-from sklearn.preprocessing import LabelEncoder
-from sklearn import model_selection
-from torch.utils.data import TensorDataset
-import pandas as pd
-from tqdm import tqdm
-import torchvision
-import torchvision.transforms as transforms
-import os
-import urllib.request
-import tarfile
-import shutil
-import librosa
-import torch.utils.data as data
-from scipy import integrate
-import random
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, RobustScaler
+from torch.utils.data import Dataset
 
 
 class EthanolLevel(Dataset):

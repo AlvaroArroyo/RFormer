@@ -15,7 +15,7 @@ import signatory
 from datasets import *
 from sig_utils import *
 from utils import *
-from model_classification import *
+from model import *
 
 
 from torch.utils.data import Dataset
@@ -158,7 +158,7 @@ def build_model(args, input_dim, seq_len, num_samples, num_classes, device):
             num_classes=num_classes
         ).to(device)
     elif args.model == 'lstm':
-        return LSTM_Classification(
+        return LSTM(
             input_size=input_dim,
             hidden_size=10,
             num_layers=100,

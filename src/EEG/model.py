@@ -297,7 +297,7 @@ class GaussianLoss(nn.Module):
         loss = - Normal(self.mu,self.sigma).log_prob(x)
         return torch.sum(loss)/(loss.size(0)*loss.size(1))
 
-class LSTM_Classification(nn.Module):
+class LSTM(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, batch_first, num_classes):
         super().__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first)

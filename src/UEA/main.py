@@ -9,7 +9,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import wandb
 
 from model_classification import DecoderTransformer
 from lstm_classification import LSTM_Classification
@@ -110,7 +109,6 @@ def parse_args():
     parser.add_argument("--overlap", action="store_true", help="Overlap data windows")
     parser.add_argument("--scale_att", action="store_true", help="Scale attention weights")
     parser.add_argument("--sparse", action="store_true", help="Use sparse connections in model")
-    parser.add_argument("--wandb", action="store_true", help="Enable Weights & Biases logging")
 
     # Load YAML defaults if provided
     if args.config:
@@ -238,14 +236,6 @@ def train_one_seed(config, seed, device):
         val_acc, _ = calculate_accuracy(config, model, val_loader, num_classes, seq_len_orig, keep_indices, device)
         test_acc, _ = calculate_accuracy(config, model, test_loader, num_classes, seq_len_orig, keep_indices, device)
 
-        if config.wandb:
-            wandb.log({
-                'Loss/train': avg_loss,
-                'Accuracy/validation': val_acc,
-                'Accuracy/test': test_acc,
-                'epoch': epoch
-            })
-
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_test_at_val = test_acc
@@ -255,13 +245,6 @@ def train_one_seed(config, seed, device):
 
     print(f"\nTotal training time: {time.time() - start_time:.2f}s")
     final_acc, err_dist = calculate_accuracy(config, model, test_loader, num_classes, seq_len_orig, keep_indices, device)
-    
-    if config.wandb:
-        wandb.log({
-            'Performance/best_validation_accuracy': best_val_acc,
-            'Performance/final_test_accuracy': final_acc,
-            'Performance/test_at_best_validation': best_test_at_val
-        })
         
     return final_acc
 
@@ -272,11 +255,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    if config.wandb:
-        # FIX 3: Removed wandb.login() - relies on user being logged in via CLI or env var.
-        wandb.init(project="RFormer", config=vars(config))
         
-    seeds = [43 + i for i in range(config.n_seeds)]
+    seeds = [42 + i for i in range(config.n_seeds)]
     results = []
     
     for s in seeds:
@@ -288,12 +268,6 @@ def main():
         mean_acc = np.mean(results)
         std_acc = np.std(results)
         print(f"\nAverage Accuracy over {len(results)} seeds: {mean_acc*100:.2f}% (± {std_acc*100:.2f}%)")
-        if config.wandb:
-            wandb.summary['final_mean_accuracy'] = mean_acc
-            wandb.summary['final_std_accuracy'] = std_acc
-
-    if config.wandb:
-        wandb.finish()
 
 
 if __name__ == "__main__":
